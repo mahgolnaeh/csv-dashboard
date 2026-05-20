@@ -125,7 +125,7 @@ class ChartSpec(BaseModel):
     @classmethod
     def sql_must_reference_data_table(cls, v: str) -> str:
         """Make sure the query uses the correct table name."""
-        if "FROM CLEANED_DATA" not in v.upper() and "FROM DATA" not in v.upper():
+        if "FROM CLEANED_DATA" not in v.upper():
             raise ValueError("sql_query must reference table 'cleaned_data' (FROM cleaned_data).")
         return v
 
