@@ -18,7 +18,7 @@
 
 ## 2. File-by-file mapping
 
-### 2.1 `chart_engine.py` → REUSE (patched — copy from `_existing_code/`)
+### 2.1 `chart_engine.py` → REUSE (patched — copy from `_existing_code/`) ✅ DONE (95b4eb6)
 
 **Old location:** `/mnt/user-data/outputs/chart_engine.py` (576 lines)
 **Canonical source:** `_existing_code/chart_engine.py` (patched during Phase 0)
@@ -53,7 +53,7 @@ to the project.
 
 ---
 
-### 2.2 `data_quality.py` → REUSE
+### 2.2 `data_quality.py` → REUSE ✅ DONE (95b4eb6)
 
 **Old location:** `/mnt/user-data/outputs/data_quality.py` (335 lines)
 **New location:** `src/csv_dashboard/quality/data_quality.py`
@@ -65,7 +65,7 @@ to touch it.
 
 ---
 
-### 2.3 `profiler.py` → REUSE
+### 2.3 `profiler.py` → REUSE ✅ DONE (95b4eb6)
 
 **Old location:** `/mnt/user-data/outputs/profiler.py` (215 lines)
 **New location:** `src/csv_dashboard/profiling/profiler.py`
@@ -77,7 +77,7 @@ It already returns the structured profile dict the LLM expects.
 
 ---
 
-### 2.4 `chart_spec.py` → REUSE (one small change)
+### 2.4 `chart_spec.py` → REUSE ✅ DONE (95b4eb6)
 
 **Old location:** `/mnt/user-data/outputs/chart_spec.py` (290 lines)
 **New location:** `src/csv_dashboard/insights/chart_spec.py`
@@ -90,7 +90,7 @@ It already returns the structured profile dict the LLM expects.
 
 ---
 
-### 2.5 `transparency.py` → REUSE
+### 2.5 `transparency.py` → REUSE ✅ DONE (95b4eb6)
 
 **Old location:** `/mnt/user-data/outputs/transparency.py` (175 lines)
 **New location:** `src/csv_dashboard/transparency/transparency.py`
@@ -227,16 +227,16 @@ pydantic-settings config. The old code used hard-coded constants.
 |---|---|---|---|
 | `config.py` | NEW | — | ~30 |
 | `ingestion/loader.py` | NEW | — | ~30 |
-| `quality/data_quality.py` | REUSE | old `data_quality.py` | 335 |
-| `profiling/profiler.py` | REUSE | old `profiler.py` | 215 |
+| `quality/data_quality.py` | ✅ REUSE DONE | old `data_quality.py` | 398 |
+| `profiling/profiler.py` | ✅ REUSE DONE | old `profiler.py` | 290 |
 | `insights/llm_client.py` | NEW | — | ~80 |
-| `insights/chart_spec.py` | REUSE | old `chart_spec.py` | 290 |
+| `insights/chart_spec.py` | ✅ REUSE DONE | old `chart_spec.py` | 281 |
 | `insights/prompts.py` | REFACTOR + NEW | old `pipeline.py` (prompts) + new Insight Writer prompts | ~150 |
 | `agents/chart_planner.py` | REFACTOR | old `pipeline.py::_ask_llm_with_validation` | ~80 |
 | `agents/insight_writer.py` | NEW | — | ~100 |
-| `charts/engine.py` | REUSE (patched) | `_existing_code/chart_engine.py` | 576 |
+| `charts/engine.py` | ✅ REUSE DONE (patched) | `_existing_code/chart_engine.py` | 667 |
 | `charts/renderer.py` | REFACTOR | old `pipeline.py::_render` | ~120 |
-| `transparency/transparency.py` | REUSE | old `transparency.py` | 175 |
+| `transparency/transparency.py` | ✅ REUSE DONE | old `transparency.py` | 177 |
 | `orchestrator/pipeline.py` | REWRITE | old `pipeline.py::run` | ~130 |
 | `ui/app.py` | NEW | — | ~200 |
 | `tests/*` | NEW | — | ~500 |
