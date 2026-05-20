@@ -1,0 +1,17 @@
+.venv/
+.git/
+.github/
+.pytest_cache/
+.claude/
+.specify/
+__pycache__/
+*.pyc
+*.pyo
+tests/
+_existing_code/
+_planning/
+_validation/
+docs/
+.env
+.env.*
+*.md
