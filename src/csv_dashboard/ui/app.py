@@ -63,7 +63,15 @@ def _main() -> None:
     st.title("📊 CSV Dashboard")
     st.caption("Upload a CSV. Get insights. No setup needed.")
 
-    uploaded = st.file_uploader("Upload CSV", type=["csv"], label_visibility="collapsed")
+    if "uploader_key" not in st.session_state:
+        st.session_state.uploader_key = 0
+
+    uploaded = st.file_uploader(
+        "Upload CSV",
+        type=["csv"],
+        label_visibility="collapsed",
+        key=f"uploader_{st.session_state.uploader_key}",
+    )
 
     if not uploaded:
         return
@@ -98,6 +106,12 @@ def _main() -> None:
     result: PipelineResult = st.session_state.get(file_hash)
     if result is None:
         return
+
+    if st.button("Upload a different file"):
+        current_key = st.session_state.get("uploader_key", 0)
+        st.session_state.clear()
+        st.session_state.uploader_key = current_key + 1
+        st.rerun()
 
     # ── Dataset summary card ──────────────────────────────────────────────────
     profile = result.profile
