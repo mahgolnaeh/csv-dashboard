@@ -5,10 +5,12 @@ Entry point: streamlit run src/csv_dashboard/ui/app.py
 
 Structure:
 - _bytes_to_result: pure testable function (bytes -> temp file -> pipeline -> cleanup)
-- cached_run: st.cache_data wrapper keyed on file bytes
+- cached_run: st.cache_data wrapper keyed on file bytes (kept for test compatibility)
+- _run_with_status: pipeline call with Streamlit progress callbacks via on_step
 - _main: all Streamlit UI code (guarded from test imports)
 """
 
+import hashlib
 import sys
 import tempfile
 from pathlib import Path
@@ -39,6 +41,22 @@ def _bytes_to_result(file_bytes: bytes, filename: str) -> PipelineResult:
 cached_run = st.cache_data(show_spinner=False)(_bytes_to_result)
 
 
+def _run_with_status(file_bytes: bytes, filename: str) -> PipelineResult:
+    """Write bytes to a temp CSV, run pipeline with progress callbacks, clean up."""
+    suffix = Path(filename).suffix or ".csv"
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = tmp.name
+        return _pipeline.run(tmp_path, on_step=st.write)
+    finally:
+        if tmp_path:
+            path = Path(tmp_path)
+            if path.exists():
+                path.unlink()
+
+
 def _main() -> None:
     st.set_page_config(page_title="CSV Dashboard", page_icon="📊", layout="wide")
 
@@ -60,16 +78,25 @@ def _main() -> None:
 
     file_bytes = uploaded.read()
     filename = uploaded.name
+    file_hash = hashlib.md5(file_bytes).hexdigest()
 
-    # Run pipeline (cached by file bytes)
-    try:
-        result = cached_run(file_bytes, filename)
-    except FileLoadError as exc:
-        st.error(f"Could not read this file: {exc}")
-        return
-    except Exception as exc:
-        with st.expander("Something went wrong", expanded=False):
-            st.error(str(exc))
+    # Run pipeline (session-state cached by file content hash)
+    if file_hash not in st.session_state:
+        try:
+            with st.status("Analyzing your data...", expanded=True) as status:
+                result = _run_with_status(file_bytes, filename)
+                status.update(label="Done!", state="complete", expanded=False)
+            st.session_state[file_hash] = result
+        except FileLoadError as exc:
+            st.error(f"Could not read this file: {exc}")
+            return
+        except Exception as exc:
+            with st.expander("Something went wrong", expanded=False):
+                st.error(str(exc))
+            return
+
+    result: PipelineResult = st.session_state.get(file_hash)
+    if result is None:
         return
 
     # ── Dataset summary card ──────────────────────────────────────────────────

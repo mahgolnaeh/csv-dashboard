@@ -32,28 +32,35 @@ class PipelineResult:
     errors: list[str] = field(default_factory=list)
 
 
-def run(csv_path: str | Path) -> PipelineResult:
+def run(csv_path: str | Path, on_step=None) -> PipelineResult:
     """Run the full 8-step pipeline. Always returns a PipelineResult."""
+    _step = on_step or (lambda _: None)
     filename = Path(csv_path).name
     errors: list[str] = []
 
     # Step 1: Load CSV into DuckDB (raw_data table).
     # FileLoadError propagates intentionally -- no CSV, no dashboard.
+    _step("📂 Loading CSV...")
     con = load_csv(csv_path)
 
     try:
         # Step 2: Data quality -- creates cleaned_data VIEW
+        _step("🧹 Checking data quality...")
         dq = run_quality(con)
 
         # Step 3: Profile the cleaned data
+        _step("📊 Profiling columns...")
         df = con.execute('SELECT * FROM "cleaned_data"').df()
         profile = profile_dataframe(df)
         profile["filename"] = filename
 
         # Step 4: Agent 1 -- Chart Planner (LLM)
+        _step("🤖 Asking AI to design charts...")
         specs = plan_charts(profile, dq["llm_context"])
 
         # Step 5: Execute each spec's SQL and render
+        n = len(specs)
+        _step(f"📈 Generating {n} chart{'s' if n != 1 else ''}...")
         chart_results: list[tuple[ChartSpec, pd.DataFrame]] = []
         charts: list[ChartArtifact] = []
         for spec in specs:
@@ -80,6 +87,7 @@ def run(csv_path: str | Path) -> PipelineResult:
                 ))
 
         # Step 7: Agent 2 -- Insight Writer (LLM, only when there are LLM chart results)
+        _step("💡 Writing insights...")
         insights = write_insights(chart_results) if chart_results else []
 
         # Step 8: Transparency report
