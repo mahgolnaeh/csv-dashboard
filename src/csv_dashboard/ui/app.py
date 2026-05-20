@@ -121,7 +121,9 @@ def _main() -> None:
     st.markdown("### Key insights")
     if result.insights:
         for insight in result.insights:
-            st.markdown(f"- {insight}")
+            # Escape chars that Streamlit markdown treats as code formatting
+            safe = insight.replace("`", r"\`").replace("$", r"\$")
+            st.markdown(f"- {safe}")
     else:
         st.caption("No AI-generated insights available -- showing charts only.")
 
