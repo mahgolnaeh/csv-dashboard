@@ -63,17 +63,8 @@ def render(spec: ChartSpec, df: pd.DataFrame) -> go.Figure:
 
     fig.update_layout(
         title=dict(text=spec.title, font=dict(size=16)),
-        margin=dict(t=50, b=40, l=40, r=20),
+        margin=dict(t=50, b=30, l=40, r=20),
         height=400,
     )
-
-    if spec.plain_language_explanation:
-        fig.add_annotation(
-            text=spec.plain_language_explanation,
-            xref="paper", yref="paper",
-            x=0, y=-0.12, showarrow=False,
-            font=dict(size=12, color="gray"),
-            xanchor="left",
-        )
 
     return fig
