@@ -60,7 +60,7 @@ def run(csv_path: str | Path, on_step=None) -> PipelineResult:
 
         # Step 5: Execute each spec's SQL and render
         n = len(specs)
-        _step(f"📈 Generating {n} chart{'s' if n != 1 else ''}...")
+        _step(f"📈 Generating {n} chart{'s' if n != 1 else ''}..." if n > 0 else "📈 Preparing charts...")
         chart_results: list[tuple[ChartSpec, pd.DataFrame]] = []
         charts: list[ChartArtifact] = []
         for spec in specs:
