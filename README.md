@@ -49,6 +49,25 @@ For a deeper explanation see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
+## Tech Stack
+
+| Layer | Choice | Purpose |
+|---|---|---|
+| Language | Python 3.11+ | Core runtime |
+| Package manager | uv | Fast installs, reproducible lockfile |
+| Data engine | DuckDB | SQL on CSVs, single source of truth |
+| Profiling | pandas 2.x | Profile-time DataFrame ops only |
+| Validation | Pydantic v2 | Chart spec schema, cross-field rules |
+| LLM gateway | OpenRouter via httpx | Model-agnostic, no SDK dependency |
+| Default LLM | Claude Haiku 4.5 | Fast, low-cost chart planning |
+| Charts | Plotly | Interactive, embedded in Streamlit |
+| UI | Streamlit | Fast MVP for non-technical users |
+| Logging | structlog | JSON to stdout |
+| Testing | pytest + pytest-mock | 31 tests, LLM always mocked |
+| Container | Docker | Reproducible, secrets via env-file |
+
+---
+
 ## Quick Start
 
 **Requirements:** Python 3.11+, [uv](https://docs.astral.sh/uv/), an OpenRouter API key.
@@ -140,7 +159,7 @@ csv-dashboard/
 
 ---
 
-For trade-offs, known limitations, and production considerations, see [docs/](docs/).
+For trade-offs and production considerations, see [docs/](docs/).
 
 ---
 
