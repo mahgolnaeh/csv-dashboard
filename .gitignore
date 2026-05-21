@@ -11,3 +11,4 @@ build/
 *.csv
 !tests/fixtures/*.csv
 .claude/
+/PRESENTATION.md
