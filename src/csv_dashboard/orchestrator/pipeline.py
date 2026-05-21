@@ -55,7 +55,7 @@ def run(csv_path: str | Path, on_step=None) -> PipelineResult:
         profile["filename"] = filename
 
         # Step 4: Agent 1 -- Chart Planner (LLM)
-        _step("🤖 Asking AI to design charts...")
+        _step("🔍 Designing charts...")
         specs = plan_charts(profile, dq["llm_context"])
 
         # Step 5: Execute each spec's SQL and render

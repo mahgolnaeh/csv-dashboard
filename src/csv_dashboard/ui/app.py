@@ -139,7 +139,7 @@ def _main() -> None:
             safe = insight.replace("`", r"\`").replace("$", r"\$")
             st.markdown(f"- {safe}")
     else:
-        st.caption("No AI-generated insights available -- showing charts only.")
+        st.caption("No insights available -- showing charts only.")
 
     # ── Charts grid ───────────────────────────────────────────────────────────
     st.markdown("### Charts")
@@ -147,7 +147,7 @@ def _main() -> None:
     n_llm = sum(1 for c in result.charts if c.source == "llm")
     n_fallback = sum(1 for c in result.charts if c.source == "fallback")
     if n_fallback > 0 and n_llm == 0:
-        st.caption("Using simplified chart generation (AI service unavailable).")
+        st.caption("Using simplified chart generation.")
     elif n_fallback > 0:
         st.caption(f"{n_llm} AI-designed charts + {n_fallback} standard charts.")
 
