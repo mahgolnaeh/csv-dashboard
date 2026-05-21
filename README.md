@@ -140,17 +140,7 @@ csv-dashboard/
 
 ---
 
-## Trade-offs
-
-Key decisions, what was deliberately cut, and what would be built next:
-[docs/TRADE_OFFS.md](docs/TRADE_OFFS.md)
-
----
-
-## What's Missing
-
-Cost per CSV, latency breakdown, failure modes, security notes, observability,
-and scaling path: [docs/PRODUCTION_NOTES.md](docs/PRODUCTION_NOTES.md)
+For trade-offs, known limitations, and production considerations, see [docs/](docs/).
 
 ---
 
