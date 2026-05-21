@@ -151,6 +151,7 @@ csv-dashboard/
 ├── .github/workflows/ci.yml
 ├── docs/
 │   ├── ARCHITECTURE.md              deep dive into the pipeline
+│   ├── TECHNICAL_DESIGN.md          module internals, data contracts, design decisions
 │   ├── TRADE_OFFS.md                what was cut and why
 │   └── PRODUCTION_NOTES.md          cost, latency, failure modes, scaling
 ├── pyproject.toml
@@ -159,7 +160,7 @@ csv-dashboard/
 
 ---
 
-For trade-offs and production considerations, see [docs/](docs/).
+For deeper reading see [docs/](docs/) — [architecture](docs/ARCHITECTURE.md), [technical design](docs/TECHNICAL_DESIGN.md), trade-offs, and production notes.
 
 ---
 
