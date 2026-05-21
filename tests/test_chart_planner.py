@@ -5,12 +5,9 @@ All LLM calls are mocked -- no network, no API key needed.
 
 import json
 
-import pytest
-
 from csv_dashboard.agents.chart_planner import plan_charts
 from csv_dashboard.insights.chart_spec import ChartSpec
 from csv_dashboard.insights.llm_client import LLMError
-
 
 # ── Fixtures ────────────────────────────────────────────────────────────────────
 

@@ -11,10 +11,11 @@ Three layers of protection:
 """
 
 from __future__ import annotations
-from typing import Literal, Optional
-from pydantic import BaseModel, Field, model_validator, field_validator
-import re
 
+import re
+from typing import Literal, Optional
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # ── Allowed vocabularies ───────────────────────────────────────────────────────
 

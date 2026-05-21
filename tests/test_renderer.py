@@ -10,7 +10,6 @@ import plotly.graph_objects as go
 from csv_dashboard.charts.renderer import render
 from csv_dashboard.insights.chart_spec import ChartSpec
 
-
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 
 def _spec(**kwargs) -> ChartSpec:

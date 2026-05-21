@@ -1,2 +1,3 @@
-from .loader import load_csv, FileLoadError
+from .loader import FileLoadError, load_csv
+
 __all__ = ["load_csv", "FileLoadError"]

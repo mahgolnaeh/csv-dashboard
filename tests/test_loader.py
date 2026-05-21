@@ -7,11 +7,11 @@ Three cases per tasks.md T-021:
   3. Loading a malformed file raises FileLoadError.
 """
 
-import pytest
 from pathlib import Path
 
-from csv_dashboard.ingestion.loader import load_csv, FileLoadError
+import pytest
 
+from csv_dashboard.ingestion.loader import FileLoadError, load_csv
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 

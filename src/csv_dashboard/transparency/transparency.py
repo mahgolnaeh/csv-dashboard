@@ -9,8 +9,8 @@ The user just needs to know: "what happened to my data?"
 """
 
 from __future__ import annotations
-import re
 
+import re
 
 # ── Message templates — plain English, no technical terms ─────────────────────
 
@@ -151,9 +151,13 @@ def _first_percent(text: str) -> str:
 # ── Quick test ─────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    import sys, os
+    import os
+    import sys
     sys.path.insert(0, os.path.dirname(__file__))
-    import duckdb, pandas as pd, numpy as np, data_quality
+    import data_quality
+    import duckdb
+    import numpy as np
+    import pandas as pd
 
     np.random.seed(42)
     n = 100

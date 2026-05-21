@@ -17,7 +17,6 @@ import pytest
 from csv_dashboard.insights.chart_spec import ChartSpec
 from csv_dashboard.orchestrator.pipeline import PipelineResult, run
 
-
 # ── Synthetic CSV ────────────────────────────────────────────────────────────────
 
 SYNTHETIC_CSV = """\

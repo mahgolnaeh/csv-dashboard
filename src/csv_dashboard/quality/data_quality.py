@@ -41,7 +41,6 @@ from typing import Any
 import duckdb
 import pandas as pd
 
-
 # ── Config ─────────────────────────────────────────────────────────────────────
 
 SENTINEL_NULLS = (

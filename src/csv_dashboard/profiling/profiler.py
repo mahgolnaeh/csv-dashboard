@@ -10,11 +10,11 @@ Input:  pd.DataFrame (any domain, any size)
 Output: structured dict, fully JSON-serializable (~1000 tokens for Haiku)
 """
 
-import duckdb
-import pandas as pd
-import numpy as np
 from typing import Any
 
+import duckdb
+import numpy as np
+import pandas as pd
 
 # ─── CONSTANTS ────────────────────────────────────────────────────────────────
 

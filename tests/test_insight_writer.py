@@ -10,12 +10,10 @@ serialize.
 import json
 
 import pandas as pd
-import pytest
 
 from csv_dashboard.agents.insight_writer import write_insights
 from csv_dashboard.insights.chart_spec import ChartSpec
 from csv_dashboard.insights.llm_client import LLMError
-
 
 # ── Fixtures ────────────────────────────────────────────────────────────────────
 

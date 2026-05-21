@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 
-
 # ── Agent 1: Chart Planner ─────────────────────────────────────────────────────
 
 CHART_PLANNER_SYSTEM = """You are a senior data analyst generating dashboard chart specifications.

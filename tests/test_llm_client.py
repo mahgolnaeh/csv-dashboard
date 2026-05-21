@@ -7,10 +7,10 @@ Three cases per tasks.md T-031:
   3. Mock httpx.post returns malformed JSON (missing 'choices') → LLMError raised.
 """
 
-import pytest
 import httpx
+import pytest
 
-from csv_dashboard.insights.llm_client import call_llm, LLMError
+from csv_dashboard.insights.llm_client import LLMError, call_llm
 
 
 def _make_response(mocker, content: str):
