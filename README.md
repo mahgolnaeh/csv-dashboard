@@ -164,6 +164,13 @@ For deeper reading see [docs/](docs/) — [architecture](docs/ARCHITECTURE.md), 
 
 ---
 
+## Presentation
+
+A slide deck summarizing the project, architecture, and trade-offs:
+[CSV_Dashboard_Presentation.pptx](CSV_Dashboard_Presentation.pptx).
+
+---
+
 ## License
 
 MIT
