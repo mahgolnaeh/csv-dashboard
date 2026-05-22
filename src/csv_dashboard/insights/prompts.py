@@ -71,6 +71,18 @@ The JSON object has this exact shape:
 - **bar** -- aggregation cannot be NONE. Use for categorical comparisons.
 - **line** -- aggregation cannot be NONE, sort_order MUST be "none" (chronological order from datetime).
 
+# SQL FUNCTION RULES
+
+- date_trunc: ALWAYS write date_trunc('month', column_name), NOT date_trunc(column_name, 'month'). The unit string comes FIRST, the column name SECOND. DuckDB is strict about this argument order.
+
+  CORRECT:   SELECT date_trunc('month', signup_date) AS month
+  WRONG:     SELECT date_trunc(signup_date, 'month') AS month
+
+- Other DuckDB-specific functions to use correctly:
+  - For grouping by month: date_trunc('month', column)
+  - For grouping by year:  date_trunc('year', column)
+  - For grouping by day:   date_trunc('day', column)
+
 # EXAMPLES OF GOOD CHARTS
 
 For an Airbnb dataset:
@@ -215,6 +227,14 @@ def build_planner_retry_prompt(
     available_columns: list[str],
 ) -> str:
     """Build a retry message after a validation or SQL error."""
+    hint = ""
+    if "date_trunc" in error_message.lower():
+        hint = (
+            "\n\nCOMMON DUCKDB MISTAKE: date_trunc requires the unit string "
+            "FIRST, then the column. Write date_trunc('month', column_name), "
+            "NOT date_trunc(column_name, 'month')."
+        )
+
     return f"""{original_prompt}
 
 ---
@@ -230,7 +250,7 @@ Please return a corrected JSON object that:
 2. Fixes the specific error mentioned.
 3. Follows ALL the rules from the system prompt.
 
-Return ONLY the corrected JSON object."""
+Return ONLY the corrected JSON object.{hint}"""
 
 
 def build_insight_prompt(chart_results: list[tuple]) -> str:
