@@ -71,6 +71,10 @@ def _missing_fraction(series: pd.Series) -> float:
 
 def _has_outliers(series: pd.Series) -> bool:
     """R02: IQR-based outlier check."""
+    # bool is a numeric dtype to pandas, but quantile interpolation does b - a
+    # which numpy refuses on booleans. Booleans have no outliers anyway.
+    if pd.api.types.is_bool_dtype(series):
+        return False
     clean = series.dropna()
     if len(clean) < 4:
         return False
@@ -478,7 +482,12 @@ def generate_charts(
             continue
         if col in dt_cols:
             continue
-        if pd.api.types.is_numeric_dtype(series):
+        # bool is a numeric dtype to pandas, but a 2-value true/false column is
+        # categorical in meaning (and breaks numeric ops like quantile). Treat
+        # it as categorical so it gets a count bar chart (R03).
+        if pd.api.types.is_bool_dtype(series):
+            categorical_cols.append(col)
+        elif pd.api.types.is_numeric_dtype(series):
             numeric_cols.append(col)
         elif pd.api.types.is_string_dtype(series) or isinstance(series.dtype, pd.CategoricalDtype):
             categorical_cols.append(col)
