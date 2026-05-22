@@ -185,6 +185,10 @@ def _analyze_column(
     is_numeric = any(t in dtype for t in
                      ("int", "float", "double", "decimal", "bigint", "hugeint", "real"))
     is_date    = any(t in dtype for t in ("date", "timestamp"))
+    # Exact match, not substring: nested types like "varchar[]", "struct(...)"
+    # or "map(varchar, varchar)" contain "varchar"/"char" but are NOT plain
+    # strings, and TRIM/LOWER would fail on them just like on BOOLEAN.
+    is_string  = dtype in ("varchar", "text", "string", "char", "bpchar")
 
     # Already a proper numeric or date column — just check for outliers
     if is_numeric:
@@ -192,6 +196,13 @@ def _analyze_column(
         return q, report
 
     if is_date:
+        return q, report
+
+    # Any other scalar type (BOOLEAN, BLOB, UUID, ...) is already typed and
+    # carries no string artifacts. The string pipeline below uses VARCHAR-only
+    # functions (TRIM/LOWER/regexp_replace), so applying it to e.g. BOOLEAN
+    # raises a Binder Error. Pass these columns through unchanged.
+    if not is_string:
         return q, report
 
     # ── String column pipeline ────────────────────────────────────────────────
