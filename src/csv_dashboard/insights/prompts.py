@@ -6,6 +6,7 @@ Content copied verbatim from _planning/PROMPT_TEMPLATES.md.
 from __future__ import annotations
 
 import json
+import re
 
 # ── Agent 1: Chart Planner ─────────────────────────────────────────────────────
 
@@ -36,6 +37,23 @@ Given a profile of a dataset, return between 3 and 5 chart specifications as a J
 7. **Chart variety.** Aim for different chart types when possible: at least one distribution (histogram), one comparison (bar), and one trend (line) if a datetime column exists.
 
 8. **Use the data quality context.** If a column has warnings (high missing, mixed types), avoid using it or note the limitation in the explanation.
+
+9. **Copy column names EXACTLY. Never rewrite them.** Use each column name precisely as it appears in the column list -- same spelling, same capitalization, same spaces. Do NOT convert names to snake_case or any other style. If a column is named `neighbourhood group`, the column IS `neighbourhood group` -- there is no `neighbourhood_group`.
+
+# COLUMN NAMES -- COPY EXACTLY (CRITICAL)
+
+Column names in this dataset may contain spaces, mixed case, or special characters. You MUST use each name exactly as given. If a name contains a space or any character other than letters, digits, and underscores, you MUST wrap it in double quotes everywhere it appears in the SQL. The x_column, y_column, and color_column fields use the raw original name WITHOUT the double quotes.
+
+CORRECT (real column is: neighbourhood group):
+  SELECT "neighbourhood group", COUNT(*) AS listing_count
+  FROM cleaned_data
+  GROUP BY "neighbourhood group"
+  ORDER BY listing_count DESC LIMIT 10
+  -> x_column: neighbourhood group   y_column: listing_count
+
+WRONG (invented a snake_case name that does not exist -> Binder Error: column not found):
+  SELECT neighbourhood_group, COUNT(*) AS listing_count
+  FROM cleaned_data GROUP BY neighbourhood_group
 
 # OUTPUT FORMAT
 
@@ -168,9 +186,15 @@ Return ONLY the JSON. Nothing else."""
 
 # ── User prompt builders ───────────────────────────────────────────────────────
 
+def _needs_quoting(col: str) -> bool:
+    """True when a column name is not a bare SQL identifier (has spaces etc.)."""
+    return re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", col) is None
+
+
 def build_planner_prompt(profile: dict, quality_context: str) -> str:
     """Build the user message for the Chart Planner agent."""
     col_summary = []
+    needs_quotes: list[str] = []
     for name, info in profile["columns"].items():
         entry = {
             "name": name,
@@ -178,6 +202,9 @@ def build_planner_prompt(profile: dict, quality_context: str) -> str:
             "missing_pct": info["missing_pct"],
             "unique_count": info["unique_count"],
         }
+        if _needs_quoting(name):
+            entry["sql_reference"] = f'"{name}"'  # exact token to paste into SQL
+            needs_quotes.append(name)
         if info.get("numeric_summary"):
             ns = info["numeric_summary"]
             entry["stats"] = {
@@ -199,6 +226,22 @@ def build_planner_prompt(profile: dict, quality_context: str) -> str:
             f"\n\nDataset warnings:\n{json.dumps(profile['warnings'], indent=2)}"
         )
 
+    naming_note = (
+        "COLUMN NAME RULES:\n"
+        "- Use every column name EXACTLY as shown in its \"name\" field "
+        "(same spelling, case, spaces). Never convert to snake_case.\n"
+        "- If a column has an \"sql_reference\" field, use that exact quoted form "
+        "everywhere it appears in SQL.\n"
+        "- x_column / y_column / color_column use the raw \"name\" (no quotes)."
+    )
+    if needs_quotes:
+        ex = needs_quotes[0]
+        naming_note += (
+            f"\n\nThis dataset has columns with spaces. Example (column {ex!r}):\n"
+            f'  SELECT "{ex}", COUNT(*) AS n FROM cleaned_data '
+            f'GROUP BY "{ex}" ORDER BY n DESC LIMIT 10'
+        )
+
     return f"""Dataset: {profile.get('filename', 'unknown')}
 Rows: {profile['row_count']:,}  |  Columns: {profile['column_count']}
 Duplicate rows: {profile.get('duplicate_row_count', 0)}
@@ -217,6 +260,8 @@ Column details:
 
 {quality_context}
 
+{naming_note}
+
 Generate 3 to 5 useful, varied chart specifications for this dataset.
 Return ONLY the JSON object."""
 
@@ -227,12 +272,21 @@ def build_planner_retry_prompt(
     available_columns: list[str],
 ) -> str:
     """Build a retry message after a validation or SQL error."""
+    el = error_message.lower()
     hint = ""
-    if "date_trunc" in error_message.lower():
-        hint = (
+    if "date_trunc" in el:
+        hint += (
             "\n\nCOMMON DUCKDB MISTAKE: date_trunc requires the unit string "
             "FIRST, then the column. Write date_trunc('month', column_name), "
             "NOT date_trunc(column_name, 'month')."
+        )
+    if "not found" in el or "binder error" in el or "candidate bindings" in el:
+        hint += (
+            "\n\nCOLUMN NOT FOUND: you used a column name that does not exist -- "
+            "usually a name with spaces rewritten as snake_case. Copy column names "
+            "EXACTLY from the list above (and from the error's 'Candidate bindings' "
+            "if shown). Wrap any name with a space or special character in double "
+            'quotes, e.g. "neighbourhood group".'
         )
 
     return f"""{original_prompt}
