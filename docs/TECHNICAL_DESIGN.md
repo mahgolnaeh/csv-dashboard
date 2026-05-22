@@ -166,41 +166,6 @@ In all three modes the user sees at least 3 charts. **The dashboard always rende
 > writing) and a deterministic fallback that guarantees the dashboard always
 > renders — even with the LLM service completely offline.
 
----
-
-### Interview notes — Section 1
-
-**Q: "Walk me through the system architecture."**
-> "Linear pipeline. The CSV is loaded into DuckDB. We build a `cleaned_data`
-> VIEW that handles quality fixes as SQL expressions — raw data is never
-> mutated. The profiler produces a compact dict that goes to the Chart Planner
-> LLM. The planner returns 3–5 chart specs as JSON, validated by Pydantic.
-> DuckDB executes the SQL for each spec. The results go to a second LLM, the
-> Insight Writer, which produces plain-English sentences. Plotly renders the
-> figures. Two LLM calls in total. If anything in the LLM path fails, a
-> deterministic rule engine fills the gap."
-
-**Q: "Why this many steps? Couldn't you merge some?"**
-> "Each module has a single responsibility. I could have merged profiling
-> and chart-planning into one prompt, but separating them keeps each LLM
-> focused on a smaller task — the planner only sees statistics, the writer
-> only sees results. That separation is also a security boundary: raw data
-> never reaches either LLM."
-
-**Q: "What happens if the LLM hallucinates a column name in SQL?"**
-> "Three lines of defense. First, Pydantic validates the JSON structure.
-> Second, the SQL safety validator blocks DROP/DELETE/etc. Third, DuckDB
-> raises a `CatalogException` if a column doesn't exist — the orchestrator
-> catches that, logs it, and drops the spec. If fewer than three specs
-> survive, the deterministic engine fills the gap. The dashboard always
-> renders."
-
-**Q: "How does raw user data flow through the system?"**
-> "It doesn't reach the LLM. The CSV lives in DuckDB. The profile sent to
-> the planner contains only aggregated statistics — min, max, mean, types,
-> sample size. The Insight Writer sees only query results, which are already
-> aggregated by GROUP BY. A CSV with email addresses or names will have
-> those values stay in DuckDB."
 
 ---
 
@@ -723,32 +688,6 @@ MVP whose audience is "any developer can run it on a laptop."
 
 ---
 
-### Interview notes — Section 2
-
-**Q: "Walk me through the most interesting module."**
-> "Probably `data_quality.py`. It builds a SQL VIEW, not a copy. Every fix
-> — currency stripping, sentinel-null handling, datetime parsing — is a SQL
-> expression inside the VIEW definition. Raw data stays untouched. That's
-> the line between 'cleaning' and 'mutating' — we cleaned for analysis, we
-> didn't lose the original. If a user disputes a value, we can show them
-> the raw row instantly."
-
-**Q: "How did you keep modules independent?"**
-> "Each module exposes exactly one public function, listed in §2 of the
-> design doc. Modules don't import each other's internals. The orchestrator
-> wires them together. This made the test suite cleaner — every module has
-> its own test file, and the pipeline test mocks only the two LLM calls."
-
-**Q: "Why is the renderer separate from the engine?"**
-> "`charts/engine.py` is the deterministic fallback — it doesn't take a
-> spec, it takes a DataFrame and chooses charts itself. `charts/renderer.py`
-> takes a validated spec from the LLM path and renders it. Two different
-> jobs: one decides what to chart, the other turns a spec into a figure.
-> Keeping them separate means I can swap the LLM rendering style without
-> touching the fallback rules."
-
----
-
 ## Section 3 — Specification Deep Dive
 
 This section is the schema reference: every field of every important data
@@ -963,24 +902,6 @@ class PipelineResult:
 not exist"`. The dashboard still renders; the UI shows these in a collapsed
 expander.
 
----
-
-### Interview notes — Section 3
-
-**Q: "How do you constrain the LLM's output?"**
-> "Pydantic. Every chart spec must pass three layers: type validation
-> (chart_type must be one of five literals), field validation (SQL must start
-> with SELECT, must reference `cleaned_data`, no DDL), and cross-field
-> validation (histogram has no y_column, scatter has both axes, line is
-> chronological). If any fail, we send the validation error back to the LLM
-> for a retry. Two retries max."
-
-**Q: "Why do you have semantic types on top of pandas dtypes?"**
-> "pandas tells you the storage type. We want the *meaning*. An integer column
-> with 891 unique values out of 891 rows is an identifier, not a number to
-> aggregate. The semantic type tells the LLM what to skip and what to chart.
-> The planner system prompt explicitly says 'do not use identifier or text
-> columns.'"
 
 ---
 
@@ -1243,28 +1164,6 @@ At Claude Haiku rates (~$1 / 1M input, $5 / 1M output):
 
 2,000 CSV uploads ≈ $1. The deterministic fallback adds $0.
 
-### Interview notes — Section 4
-
-**Q: "How do you handle prompt injection?"**
-> "Two layers. First, the user never types into a prompt — the only inputs
-> to the LLM are the profile dict and aggregated query results, both produced
-> by our code, not the user. A CSV cell value never reaches the LLM verbatim.
-> Second, the SQL validator blocks DROP/DELETE/etc., so even if the LLM
-> hallucinated dangerous SQL, DuckDB never executes it."
-
-**Q: "Why two separate prompts instead of one?"**
-> "Three reasons. Security: the planner sees only profile, the writer sees
-> only results. Neither sees raw data. Quality: a single prompt asking both
-> 'design these charts' and 'write insights' does both jobs worse. Cost: the
-> writer only gets called if at least one LLM chart succeeded — so on full
-> fallback we save one LLM call."
-
-**Q: "What's your retry strategy?"**
-> "One retry per agent, with structured feedback. The planner gets the
-> validation error plus the available column list. That's enough to fix
-> most hallucinated column names or cross-field errors. Multiple retries
-> rarely succeed and waste tokens — better to fall back."
-
 ---
 
 ## Section 5 — End-to-End Execution Trace (Titanic)
@@ -1473,38 +1372,6 @@ PipelineResult(
 
 **Total elapsed time: ~5–7 seconds.** Well within the 15-second budget.
 
----
-
-### Interview notes — Section 5
-
-**Q: "Walk me through what happens when I upload Titanic."**
-> "Eight steps. DuckDB loads it — under 100 ms. The data quality module
-> detects Cabin is 77% empty and drops it from the cleaned VIEW. Age is
-> 20% missing — flagged as a warning, not dropped. The profiler runs
-> SUMMARIZE plus skewness — produces about a thousand tokens of column
-> stats. The Chart Planner LLM sees that profile and returns 5 chart specs
-> in about 2 seconds — survival by class, survival by gender, age
-> distribution, fare distribution, median fare by class. DuckDB executes
-> each SQL query in under half a second. The Insight Writer sees the
-> aggregated results and writes 4 plain-English sentences in about 2 seconds.
-> Plotly renders, Streamlit displays. About 5 to 7 seconds end-to-end."
-
-**Q: "What if the LLM hallucinates a column name like `cabin_class`?"**
-> "The Pydantic SQL validator only checks for DDL/DML safety — it doesn't
-> know which columns exist. So that spec passes Pydantic. Then DuckDB tries
-> to execute the SQL and raises `CatalogException: Referenced column
-> 'cabin_class' not found`. The orchestrator catches that, appends a string
-> to `errors`, and moves on to the next spec. If too few specs survive
-> (less than 3), the fallback engine fills the rest. Either way the user
-> sees a working dashboard plus the warning in the collapsed errors expander."
-
-**Q: "What was the slowest step?"**
-> "The two LLM calls — each takes 1–2 seconds via OpenRouter. Together
-> that's 3–4 seconds of the total 5–7. Everything else is sub-second.
-> DuckDB on 891 rows is essentially free. On Airbnb (48k rows) the
-> DuckDB steps grow to about 2 seconds total but the LLM calls stay the
-> same — the profile is constant size. So Airbnb takes 5–10 seconds total,
-> still within the 30-second budget."
 
 ---
 
@@ -1523,7 +1390,7 @@ PipelineResult(
   pointing at the rejected alternative, so you can revisit decisions
   with context.
 
-**Three sentences to memorize:**
+**Three points:**
 
 1. DuckDB is the single source of truth — no parallel pandas paths.
 2. Raw user data never reaches an LLM.
